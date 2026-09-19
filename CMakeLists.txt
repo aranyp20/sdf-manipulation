@@ -47,6 +47,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/Math/MyEigen.h
     src/Representation/Implicit.h
+    src/Representation/ImplicitBspline.h
+    src/Representation/ImplicitBspline.cpp
     src/Representation/Sphere.h
     src/Visualization/Camera.h
     src/Visualization/Camera.cpp

@@ -1,4 +1,4 @@
-#include "Representation/Sphere.h"
+#include "Representation/ImplicitBspline.h"
 #include "Visualization/Camera.h"
 #include "Visualization/Renderer.h"
 #include "backends/imgui_impl_glfw.h"
@@ -87,7 +87,7 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL2_Init();
 
-    Sphere sphere(Vec3::Zero(), 1.0);
+    ImplicitBspline paca = ImplicitBspline::MakePaca();
     Renderer renderer;
     int lastW = 0, lastH = 0;
 
@@ -100,7 +100,7 @@ int main() {
         glViewport(0, 0, fbw, fbh);
 
         if (state.dirty || w != lastW || h != lastH) {
-            renderer.ComputeNormalMap(sphere, state.camera, w, h);
+            renderer.ComputeNormalMap(paca, state.camera, w, h);
             renderer.ShadeDiffuse();
             state.dirty = false;
             lastW = w;

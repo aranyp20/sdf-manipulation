@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cmath>
+#include <thread>
 
 namespace {
 constexpr int kMaxSteps = 128;
@@ -36,16 +37,26 @@ void Renderer::ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w
     normalMap_.normals.assign(static_cast<size_t>(w) * h, Vec3::Zero());
     normalMap_.hit.assign(static_cast<size_t>(w) * h, 0);
 
-    for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-            const Ray ray = camera.PixelRay(x, y, w, h);
-            double t;
-            if (SphereTrace(sdf, ray, t)) {
-                const size_t i = static_cast<size_t>(y) * w + x;
-                normalMap_.normals[i] = EstimateNormal(sdf, ray.origin + t * ray.dir);
-                normalMap_.hit[i] = 1;
+    const unsigned numThreads = std::max(1u, std::thread::hardware_concurrency());
+    std::vector<std::thread> threads;
+    threads.reserve(numThreads);
+    for (unsigned tid = 0; tid < numThreads; ++tid) {
+        threads.emplace_back([&, tid] {
+            for (int y = static_cast<int>(tid); y < h; y += static_cast<int>(numThreads)) {
+                for (int x = 0; x < w; ++x) {
+                    const Ray ray = camera.PixelRay(x, y, w, h);
+                    double t;
+                    if (SphereTrace(sdf, ray, t)) {
+                        const size_t i = static_cast<size_t>(y) * w + x;
+                        normalMap_.normals[i] = EstimateNormal(sdf, ray.origin + t * ray.dir);
+                        normalMap_.hit[i] = 1;
+                    }
+                }
             }
-        }
+        });
+    }
+    for (std::thread& t : threads) {
+        t.join();
     }
 }
 
