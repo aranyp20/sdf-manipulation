@@ -1,4 +1,5 @@
 #include "Representation/ImplicitBspline.h"
+#include "Representation/Sphere.h"
 #include "Visualization/Camera.h"
 #include "Visualization/Renderer.h"
 #include "backends/imgui_impl_glfw.h"
@@ -87,7 +88,15 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL2_Init();
 
+    Sphere sphere(Vec3::Zero(), 1.0);
     ImplicitBspline paca = ImplicitBspline::MakePaca();
+    struct ModelEntry {
+        const char* name;
+        const Implicit* model;
+    };
+    const ModelEntry models[] = {{"Sphere", &sphere}, {"Paca", &paca}};
+    int selectedModel = 1;
+
     Renderer renderer;
     int lastW = 0, lastH = 0;
 
@@ -100,7 +109,7 @@ int main() {
         glViewport(0, 0, fbw, fbh);
 
         if (state.dirty || w != lastW || h != lastH) {
-            renderer.ComputeNormalMap(paca, state.camera, w, h);
+            renderer.ComputeNormalMap(*models[selectedModel].model, state.camera, w, h);
             renderer.ShadeDiffuse();
             state.dirty = false;
             lastW = w;
@@ -115,8 +124,13 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("SDF Manipulation");
-        ImGui::Text("Dummy window");
+        ImGui::Begin("Models");
+        for (int i = 0; i < static_cast<int>(std::size(models)); ++i) {
+            if (ImGui::Selectable(models[i].name, selectedModel == i) && selectedModel != i) {
+                selectedModel = i;
+                state.dirty = true;
+            }
+        }
         ImGui::End();
 
         ImGui::Render();
