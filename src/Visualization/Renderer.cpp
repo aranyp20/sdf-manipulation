@@ -76,9 +76,9 @@ void Renderer::ShadeDiffuse() {
         // Half-Lambert: wraps the light around, so no side goes fully dark.
         const double d = 0.5 + 0.5 * normalMap_.normals[i].dot(lightDir);
         const float v = static_cast<float>(std::min(1.0, ambient + (1.0 - ambient) * d));
-        pixels_[i * 3 + 0] = v * 0.9f;
-        pixels_[i * 3 + 1] = v * 0.6f;
-        pixels_[i * 3 + 2] = v * 0.3f;
+        pixels_[i * 3 + 0] = v * 0.2f;
+        pixels_[i * 3 + 1] = v * 0.4f;
+        pixels_[i * 3 + 2] = v * 0.75f;
     }
 }
 
