@@ -1,0 +1,86 @@
+BasedOnStyle: LLVM
+
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignTrailingComments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: None
+AlwaysBreakAfterReturnType: None
+AlwaysBreakTemplateDeclarations: true
+BinPackArguments: false
+BinPackParameters: false
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeColon
+# this it also allows reformating some lines (e.g. short enum),
+# setting to 0 would prevent be we would have to live with long lines
+ColumnLimit: 120
+ConstructorInitializerIndentWidth: 0
+IndentCaseLabels: true
+IndentWidth: 4
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyExcessCharacter: 5
+PenaltyReturnTypeOnItsOwnLine: 50
+PointerAlignment: Left
+SpaceAfterTemplateKeyword: false
+
+ObjCBlockIndentWidth: 4
+ObjCSpaceAfterProperty: true
+
+# TODO: even more ordered includes
+# IncludeCategories w/ IncludeBlocks: Merge
+
+NamespaceIndentation: Inner
+
+IncludeIsMainRegex: '(Tests)?$'
+IncludeIsMainSourceRegex: '(\.metal)$'
+IncludeBlocks: Regroup
+
+IncludeCategories:
+# BEGIN clang-format-include-categories.sh
+  - Regex:           '^"AppCommon/'
+    Priority:        100
+  - Regex:           '^"Export/'
+    Priority:        101
+  - Regex:           '^"FeatureTreeInterop/'
+    Priority:        102
+  - Regex:           '^"GPUEvaluator/'
+    Priority:        103
+  - Regex:           '^"Model/'
+    Priority:        104
+  - Regex:           '^"Modeler/'
+    Priority:        105
+  - Regex:           '^"Mono/'
+    Priority:        106
+  - Regex:           '^"MonoRPC/'
+    Priority:        107
+  - Regex:           '^"Neumann/'
+    Priority:        108
+  - Regex:           '^"NotGfx/'
+    Priority:        109
+  - Regex:           '^"ParasolidHelpers/'
+    Priority:        110
+  - Regex:           '^"Presets/'
+    Priority:        111
+  - Regex:           '^"Rendering/'
+    Priority:        112
+  - Regex:           '^"Shaders/'
+    Priority:        113
+# END clang-format-include-categories.sh
+
+  - Regex:           '^"Gfx/'
+    Priority:        200
+  - Regex:           '^"SPLib/'
+    Priority:        201
+
+  - Regex:           '^"(spdlog|Eigen|tl|gtest|gmock|manifold|clipper2|rapidjson|benchmark|capnp|kj)/'
+    Priority:        300
+  - Regex:           '^"(imgui|xxhash)'
+    Priority:        301
+    CaseSensitive:   true
+
+  - Regex:           '^\"[^\"]+\"'
+    Priority:        10
+  - Regex:           '^<'
+    Priority:        1000

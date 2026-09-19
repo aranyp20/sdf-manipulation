@@ -1,0 +1,82 @@
+#include "Visualization/Renderer.h"
+
+#include <GLFW/glfw3.h>
+#include <cmath>
+
+namespace {
+constexpr int kMaxSteps = 128;
+constexpr double kMaxDistance = 100.0;
+constexpr double kHitEpsilon = 1e-4;
+
+bool SphereTrace(const Implicit& sdf, const Ray& ray, double& tOut) {
+    double t = 0.0;
+    for (int i = 0; i < kMaxSteps && t < kMaxDistance; ++i) {
+        const double d = sdf.Sdf(ray.origin + t * ray.dir);
+        if (d < kHitEpsilon) {
+            tOut = t;
+            return true;
+        }
+        t += d;
+    }
+    return false;
+}
+
+Vec3 EstimateNormal(const Implicit& sdf, const Vec3& p) {
+    constexpr double e = 1e-4;
+    const double dx = sdf.Sdf(p + Vec3(e, 0, 0)) - sdf.Sdf(p - Vec3(e, 0, 0));
+    const double dy = sdf.Sdf(p + Vec3(0, e, 0)) - sdf.Sdf(p - Vec3(0, e, 0));
+    const double dz = sdf.Sdf(p + Vec3(0, 0, e)) - sdf.Sdf(p - Vec3(0, 0, e));
+    return Vec3(dx, dy, dz).normalized();
+}
+} // namespace
+
+void Renderer::ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w, int h) {
+    normalMap_.w = w;
+    normalMap_.h = h;
+    normalMap_.normals.assign(static_cast<size_t>(w) * h, Vec3::Zero());
+    normalMap_.hit.assign(static_cast<size_t>(w) * h, 0);
+
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            const Ray ray = camera.PixelRay(x, y, w, h);
+            double t;
+            if (SphereTrace(sdf, ray, t)) {
+                const size_t i = static_cast<size_t>(y) * w + x;
+                normalMap_.normals[i] = EstimateNormal(sdf, ray.origin + t * ray.dir);
+                normalMap_.hit[i] = 1;
+            }
+        }
+    }
+}
+
+void Renderer::ShadeDiffuse() {
+    const Vec3 lightDir = Vec3(0.5, 0.7, 0.5).normalized();
+    constexpr double ambient = 0.25;
+    const size_t n = normalMap_.normals.size();
+    pixels_.assign(n * 3, 0.0f);
+
+    for (size_t i = 0; i < n; ++i) {
+        if (!normalMap_.hit[i]) {
+            pixels_[i * 3 + 0] = 0.1f;
+            pixels_[i * 3 + 1] = 0.1f;
+            pixels_[i * 3 + 2] = 0.1f;
+            continue;
+        }
+        // Half-Lambert: wraps the light around, so no side goes fully dark.
+        const double d = 0.5 + 0.5 * normalMap_.normals[i].dot(lightDir);
+        const float v = static_cast<float>(std::min(1.0, ambient + (1.0 - ambient) * d));
+        pixels_[i * 3 + 0] = v * 0.9f;
+        pixels_[i * 3 + 1] = v * 0.6f;
+        pixels_[i * 3 + 2] = v * 0.3f;
+    }
+}
+
+void Renderer::Draw(int fbw, int fbh) const {
+    if (normalMap_.w == 0 || normalMap_.h == 0 || pixels_.empty()) {
+        return;
+    }
+    glRasterPos2d(-1.0, -1.0);
+    glPixelZoom(static_cast<float>(fbw) / normalMap_.w, static_cast<float>(fbh) / normalMap_.h);
+    glDrawPixels(normalMap_.w, normalMap_.h, GL_RGB, GL_FLOAT, pixels_.data());
+    glPixelZoom(1.0f, 1.0f);
+}
