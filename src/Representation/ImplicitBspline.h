@@ -16,6 +16,10 @@ public:
 
     double Sdf(const Vec3& p) const override;
 
+    Box3 GetBoundingBox() const override {
+        return {domainMin_, domainMin_ + Vec3::Constant(size_)};
+    }
+
     // Analytic gradient and (symmetric) Hessian of F at p.
     void EvalDerivatives(const Vec3& p, Vec3& grad, Mat3& hess) const;
 

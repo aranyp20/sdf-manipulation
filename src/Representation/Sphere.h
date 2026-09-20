@@ -12,6 +12,10 @@ public:
         return (p - center_).norm() - radius_;
     }
 
+    Box3 GetBoundingBox() const override {
+        return {center_ - Vec3::Constant(radius_), center_ + Vec3::Constant(radius_)};
+    }
+
 private:
     Vec3 center_;
     double radius_;

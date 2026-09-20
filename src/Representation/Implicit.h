@@ -6,4 +6,5 @@ class Implicit {
 public:
     virtual ~Implicit() = default;
     virtual double Sdf(const Vec3& p) const = 0;
+    virtual Box3 GetBoundingBox() const = 0;
 };

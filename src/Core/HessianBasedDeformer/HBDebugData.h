@@ -12,6 +12,5 @@ struct HBDebugData {
     std::vector<Vec3> twoSaddle; // 2 negative eigenvalues
     std::vector<Vec3> maximum; // 3 negative eigenvalues
     // Box the search ran in (the spline domain minus the skipped boundary layers).
-    Vec3 searchMin = Vec3::Zero();
-    Vec3 searchMax = Vec3::Zero();
+    Box3 searchBox;
 };

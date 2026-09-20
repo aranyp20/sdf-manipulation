@@ -78,13 +78,18 @@ void DrawPoints(const std::vector<Vec3>& points, const ImVec4& color, float poin
     glEnd();
 }
 
-// Wireframe of the box the saddle search ran in. Straight 3D segments project to
-// straight 2D segments under perspective, so drawing the corner-to-corner lines is exact.
-void DrawSearchDomain(const Vec3& lo, const Vec3& hi, const Camera& camera, int w, int h) {
-    // Corner c has hi.x if bit 0 is set, hi.y if bit 1, hi.z if bit 2; edges join
-    // corners differing in exactly one bit.
+// Wireframe box. Straight 3D segments project to straight 2D segments under
+// perspective, so drawing the corner-to-corner lines is exact.
+void DrawWireBox(const Box3& box, const Camera& camera, int w, int h) {
+    if (box.isEmpty()) {
+        return;
+    }
+    // Corner c has max.x if bit 0 is set, max.y if bit 1, max.z if bit 2; edges
+    // join corners differing in exactly one bit.
     constexpr int kEdges[12][2] = {
         {0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+    const Vec3& lo = box.min();
+    const Vec3& hi = box.max();
     Vec3 corners[8];
     for (int c = 0; c < 8; ++c) {
         corners[c] = Vec3(c & 1 ? hi.x() : lo.x(), c & 2 ? hi.y() : lo.y(), c & 4 ? hi.z() : lo.z());
@@ -162,6 +167,7 @@ int main() {
     HBDebugData hbDebugData;
     bool showSaddlePoints = false;
     bool showSearchGrid = false;
+    bool showBoundingBox = false;
 
     Renderer renderer;
     int lastW = 0, lastH = 0;
@@ -187,8 +193,11 @@ int main() {
         renderer.Draw(fbw, fbh);
 
         const auto* selectedBspline = dynamic_cast<const ImplicitBspline*>(models[selectedModel].model);
+        if (showBoundingBox) {
+            DrawWireBox(models[selectedModel].model->GetBoundingBox(), state.camera, w, h);
+        }
         if (showSearchGrid && selectedBspline) {
-            DrawSearchDomain(hbDebugData.searchMin, hbDebugData.searchMax, state.camera, w, h);
+            DrawWireBox(hbDebugData.searchBox, state.camera, w, h);
         }
         if (showSaddlePoints && selectedBspline) {
             DrawCriticalPoints(hbDebugData, state.camera, w, h);
@@ -205,6 +214,10 @@ int main() {
                 state.dirty = true;
             }
         }
+        ImGui::End();
+
+        ImGui::Begin("Common debug visu");
+        ImGui::Checkbox("Show bounding box", &showBoundingBox);
         ImGui::End();
 
         ImGui::Begin("Hessian Deformer");
