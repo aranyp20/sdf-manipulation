@@ -49,10 +49,12 @@ add_executable(${PROJECT_NAME}
     src/Core/HessianBasedDeformer/HessianBasedDeformer.h
     src/Core/HessianBasedDeformer/HessianBasedDeformer.cpp
     src/Math/MyEigen.h
+    src/Representation/Csg.h
+    src/Representation/Csg.cpp
     src/Representation/Implicit.h
     src/Representation/ImplicitBspline.h
     src/Representation/ImplicitBspline.cpp
-    src/Representation/Sphere.h
+    src/Representation/Primitive.h
     src/Visualization/Camera.h
     src/Visualization/Camera.cpp
     src/Visualization/Renderer.h

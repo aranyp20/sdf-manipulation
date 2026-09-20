@@ -1,6 +1,7 @@
 #include "Core/HessianBasedDeformer/HessianBasedDeformer.h"
+#include "Representation/Csg.h"
 #include "Representation/ImplicitBspline.h"
-#include "Representation/Sphere.h"
+#include "Representation/Primitive.h"
 #include "Visualization/Camera.h"
 #include "Visualization/Renderer.h"
 #include "backends/imgui_impl_glfw.h"
@@ -191,11 +192,17 @@ int main() {
     Sphere sphere(Vec3::Zero(), 1.0);
     ImplicitBspline paca = ImplicitBspline::MakePaca();
     ImplicitBspline torus = ImplicitBspline::MakeTorus();
+    Csg sphereCut = Csg::MakeSphereWithSphereCut();
+    Csg cubeWithSphere = Csg::MakeCubeWithSphere();
     struct ModelEntry {
         const char* name;
         const Implicit* model;
     };
-    const ModelEntry models[] = {{"Sphere", &sphere}, {"Paca", &paca}, {"Torus", &torus}};
+    const ModelEntry models[] = {{"Sphere", &sphere},
+                                 {"Paca", &paca},
+                                 {"Torus", &torus},
+                                 {"Sphere cut", &sphereCut},
+                                 {"Cube with sphere", &cubeWithSphere}};
     int selectedModel = 1;
 
     HBDebugData hbDebugData;
