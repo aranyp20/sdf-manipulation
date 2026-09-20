@@ -22,6 +22,11 @@ public:
     // Draw the shaded buffer into a fbw x fbh framebuffer.
     void Draw(int fbw, int fbh) const;
 
+    // Debug overlays, drawn on top of the image (no depth test).
+    void
+    DrawPoints(const std::vector<Vec3>& points, const Vec3& color, float pointSize, const Camera& camera, int w, int h) const;
+    void DrawWireBox(const Box3& box, const Vec3& color, const Camera& camera, int w, int h) const;
+
 private:
     NormalMap normalMap_;
     std::vector<float> pixels_; // RGB float, same layout as the normal map

@@ -65,53 +65,15 @@ constexpr ImVec4 kTwoSaddleColor = {1.0f, 0.9f, 0.1f, 1.0f}; // yellow
 constexpr ImVec4 kMaximumColor = {1.0f, 0.2f, 0.2f, 1.0f}; // red
 constexpr ImVec4 kSearchGridColor = {1.0f, 0.2f, 1.0f, 1.0f}; // magenta
 
-void DrawPoints(const std::vector<Vec3>& points, const ImVec4& color, float pointSize, const Camera& camera, int w, int h) {
-    glPointSize(pointSize);
-    glColor3f(color.x, color.y, color.z);
-    glBegin(GL_POINTS);
-    for (const Vec3& p : points) {
-        Vec2 ndc;
-        if (camera.ProjectToNdc(p, w, h, ndc)) {
-            glVertex2d(ndc.x(), ndc.y());
-        }
-    }
-    glEnd();
+Vec3 ColorToVec3(const ImVec4& color) {
+    return Vec3(color.x, color.y, color.z);
 }
 
-// Wireframe box. Straight 3D segments project to straight 2D segments under
-// perspective, so drawing the corner-to-corner lines is exact.
-void DrawWireBox(const Box3& box, const Camera& camera, int w, int h) {
-    if (box.isEmpty()) {
-        return;
-    }
-    // Corner c has max.x if bit 0 is set, max.y if bit 1, max.z if bit 2; edges
-    // join corners differing in exactly one bit.
-    constexpr int kEdges[12][2] = {
-        {0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
-    const Vec3& lo = box.min();
-    const Vec3& hi = box.max();
-    Vec3 corners[8];
-    for (int c = 0; c < 8; ++c) {
-        corners[c] = Vec3(c & 1 ? hi.x() : lo.x(), c & 2 ? hi.y() : lo.y(), c & 4 ? hi.z() : lo.z());
-    }
-    glLineWidth(1.5f);
-    glColor3f(kSearchGridColor.x, kSearchGridColor.y, kSearchGridColor.z);
-    glBegin(GL_LINES);
-    for (const auto& edge : kEdges) {
-        Vec2 a, b;
-        if (camera.ProjectToNdc(corners[edge[0]], w, h, a) && camera.ProjectToNdc(corners[edge[1]], w, h, b)) {
-            glVertex2d(a.x(), a.y());
-            glVertex2d(b.x(), b.y());
-        }
-    }
-    glEnd();
-}
-
-void DrawCriticalPoints(const HBDebugData& data, const Camera& camera, int w, int h) {
-    DrawPoints(data.minimum, kMinimumColor, 8.0f, camera, w, h);
-    DrawPoints(data.oneSaddle, kOneSaddleColor, 8.0f, camera, w, h);
-    DrawPoints(data.twoSaddle, kTwoSaddleColor, 8.0f, camera, w, h);
-    DrawPoints(data.maximum, kMaximumColor, 8.0f, camera, w, h);
+void DrawCriticalPoints(const Renderer& renderer, const HBDebugData& data, const Camera& camera, int w, int h) {
+    renderer.DrawPoints(data.minimum, ColorToVec3(kMinimumColor), 8.0f, camera, w, h);
+    renderer.DrawPoints(data.oneSaddle, ColorToVec3(kOneSaddleColor), 8.0f, camera, w, h);
+    renderer.DrawPoints(data.twoSaddle, ColorToVec3(kTwoSaddleColor), 8.0f, camera, w, h);
+    renderer.DrawPoints(data.maximum, ColorToVec3(kMaximumColor), 8.0f, camera, w, h);
 }
 
 void CriticalPointRow(const char* label, const std::vector<Vec3>& points, const ImVec4& color) {
@@ -194,13 +156,14 @@ int main() {
 
         const auto* selectedBspline = dynamic_cast<const ImplicitBspline*>(models[selectedModel].model);
         if (showBoundingBox) {
-            DrawWireBox(models[selectedModel].model->GetBoundingBox(), state.camera, w, h);
+            renderer.DrawWireBox(
+                models[selectedModel].model->GetBoundingBox(), ColorToVec3(kSearchGridColor), state.camera, w, h);
         }
         if (showSearchGrid && selectedBspline) {
-            DrawWireBox(hbDebugData.searchBox, state.camera, w, h);
+            renderer.DrawWireBox(hbDebugData.searchBox, ColorToVec3(kSearchGridColor), state.camera, w, h);
         }
         if (showSaddlePoints && selectedBspline) {
-            DrawCriticalPoints(hbDebugData, state.camera, w, h);
+            DrawCriticalPoints(renderer, hbDebugData, state.camera, w, h);
         }
 
         ImGui_ImplOpenGL2_NewFrame();
