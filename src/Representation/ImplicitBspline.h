@@ -20,6 +20,7 @@ public:
     void Fit(const std::function<double(const Vec3&)>& sdf);
 
     static ImplicitBspline MakePaca();
+    static ImplicitBspline MakeTorus();
 
 private:
     double Eval(const Vec3& p) const;

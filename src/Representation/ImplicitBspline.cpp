@@ -156,3 +156,14 @@ ImplicitBspline ImplicitBspline::MakePaca() {
     });
     return spline;
 }
+
+ImplicitBspline ImplicitBspline::MakeTorus() {
+    const double major = 0.5;
+    const double minor = 0.2;
+    ImplicitBspline spline(Vec3(-1.0, -1.0, -1.0), 2.0, 32);
+    spline.Fit([&](const Vec3& p) {
+        const double ring = std::sqrt(p.x() * p.x() + p.z() * p.z()) - major;
+        return std::sqrt(ring * ring + p.y() * p.y()) - minor;
+    });
+    return spline;
+}

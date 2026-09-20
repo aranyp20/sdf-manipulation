@@ -90,11 +90,12 @@ int main() {
 
     Sphere sphere(Vec3::Zero(), 1.0);
     ImplicitBspline paca = ImplicitBspline::MakePaca();
+    ImplicitBspline torus = ImplicitBspline::MakeTorus();
     struct ModelEntry {
         const char* name;
         const Implicit* model;
     };
-    const ModelEntry models[] = {{"Sphere", &sphere}, {"Paca", &paca}};
+    const ModelEntry models[] = {{"Sphere", &sphere}, {"Paca", &paca}, {"Torus", &torus}};
     int selectedModel = 1;
 
     Renderer renderer;
