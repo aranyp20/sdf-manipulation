@@ -1,7 +1,7 @@
 #include "Visualization/Renderer.h"
 
 #include <GLFW/glfw3.h>
-#include <cmath>
+#include <algorithm>
 #include <thread>
 
 namespace {
@@ -22,13 +22,6 @@ bool SphereTrace(const Implicit& sdf, const Ray& ray, double& tOut) {
     return false;
 }
 
-Vec3 EstimateNormal(const Implicit& sdf, const Vec3& p) {
-    constexpr double e = 1e-4;
-    const double dx = sdf.Sdf(p + Vec3(e, 0, 0)) - sdf.Sdf(p - Vec3(e, 0, 0));
-    const double dy = sdf.Sdf(p + Vec3(0, e, 0)) - sdf.Sdf(p - Vec3(0, e, 0));
-    const double dz = sdf.Sdf(p + Vec3(0, 0, e)) - sdf.Sdf(p - Vec3(0, 0, e));
-    return Vec3(dx, dy, dz).normalized();
-}
 } // namespace
 
 void Renderer::ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w, int h) {
@@ -48,7 +41,7 @@ void Renderer::ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w
                     double t;
                     if (SphereTrace(sdf, ray, t)) {
                         const size_t i = static_cast<size_t>(y) * w + x;
-                        normalMap_.normals[i] = EstimateNormal(sdf, ray.origin + t * ray.dir);
+                        normalMap_.normals[i] = sdf.Grad(ray.origin + t * ray.dir).normalized();
                         normalMap_.hit[i] = 1;
                     }
                 }

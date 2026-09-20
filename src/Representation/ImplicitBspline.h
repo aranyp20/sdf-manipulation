@@ -15,6 +15,7 @@ public:
     ImplicitBspline(Vec3 domainMin, double domainSize, int cellsPerAxis);
 
     double Sdf(const Vec3& p) const override;
+    Vec3 Grad(const Vec3& p) const override;
 
     Box3 GetBoundingBox() const override {
         return {domainMin_, domainMin_ + Vec3::Constant(size_)};

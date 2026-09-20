@@ -161,6 +161,21 @@ double ImplicitBspline::Sdf(const Vec3& p) const {
     return Eval(p);
 }
 
+Vec3 ImplicitBspline::Grad(const Vec3& p) const {
+    // Mirror Sdf: outside the domain box the field is the distance to the box.
+    const Vec3 lo = domainMin_;
+    const Vec3 hi = domainMin_ + Vec3::Constant(size_);
+    const Vec3 q = p.cwiseMax(lo).cwiseMin(hi);
+    const double outside = (p - q).norm();
+    if (outside > 0.0) {
+        return (p - q) / outside;
+    }
+    Vec3 grad;
+    Mat3 hess;
+    EvalDerivatives(p, grad, hess);
+    return grad;
+}
+
 void ImplicitBspline::Fit(const std::function<double(const Vec3&)>& sdf) {
     const int m = n_ + 1;
     const int total = m * m * m;
