@@ -142,3 +142,10 @@ Csg Csg::MakeCubeWithSphere() {
     NodePtr bump = MakePrimitive(Sphere(Vec3(0.0, kHalfSize, 0.0), 0.4));
     return Csg(MakeUnion(std::move(cube), std::move(bump)));
 }
+
+Csg Csg::MakeHalfPaca() {
+    NodePtr paca = MakePrimitive(ImplicitBspline::MakePaca());
+    // The paca lies along the X axis, so the z = 0 plane cuts it lengthwise.
+    NodePtr cut = MakePrimitive(Plane(Vec3::UnitZ(), 0.0));
+    return Csg(MakeIntersection(std::move(paca), std::move(cut)));
+}

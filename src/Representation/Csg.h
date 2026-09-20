@@ -51,6 +51,9 @@ public:
     // sphere sticking halfway out of its top face.
     static Csg MakeCubeWithSphere();
 
+    // The paca cut in half lengthwise by a plane.
+    static Csg MakeHalfPaca();
+
 private:
     NodePtr root_;
     Box3 boundingBox_; // merged bounding boxes of all primitives in the tree

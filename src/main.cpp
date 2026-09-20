@@ -194,6 +194,7 @@ int main() {
     ImplicitBspline torus = ImplicitBspline::MakeTorus();
     Csg sphereCut = Csg::MakeSphereWithSphereCut();
     Csg cubeWithSphere = Csg::MakeCubeWithSphere();
+    Csg halfPaca = Csg::MakeHalfPaca();
     struct ModelEntry {
         const char* name;
         const Implicit* model;
@@ -202,7 +203,8 @@ int main() {
                                  {"Paca", &paca},
                                  {"Torus", &torus},
                                  {"Sphere cut", &sphereCut},
-                                 {"Cube with sphere", &cubeWithSphere}};
+                                 {"Cube with sphere", &cubeWithSphere},
+                                 {"Half paca", &halfPaca}};
     int selectedModel = 1;
 
     HBDebugData hbDebugData;
