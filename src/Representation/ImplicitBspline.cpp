@@ -20,6 +20,31 @@ double CubicB(double t) {
     return 0.0;
 }
 
+// First derivative b'(t); odd function.
+double CubicBPrime(double t) {
+    const double s = t < 0.0 ? -1.0 : 1.0;
+    t = std::abs(t);
+    if (t < 1.0) {
+        return s * (1.5 * t * t - 2.0 * t);
+    }
+    if (t < 2.0) {
+        return s * (-0.5 * t * t + 2.0 * t - 2.0);
+    }
+    return 0.0;
+}
+
+// Second derivative b''(t); even function.
+double CubicBSecond(double t) {
+    t = std::abs(t);
+    if (t < 1.0) {
+        return 3.0 * t - 2.0;
+    }
+    if (t < 2.0) {
+        return 2.0 - t;
+    }
+    return 0.0;
+}
+
 } // namespace
 
 ImplicitBspline::ImplicitBspline(Vec3 domainMin, double domainSize, int cellsPerAxis)
@@ -70,6 +95,56 @@ double ImplicitBspline::Eval(const Vec3& p) const {
         }
     }
     return sum;
+}
+
+void ImplicitBspline::EvalDerivatives(const Vec3& p, Vec3& grad, Mat3& hess) const {
+    const Vec3 u = (p - domainMin_) / w_;
+    int base[3];
+    double bv[3][4], bd[3][4], bdd[3][4];
+    for (int a = 0; a < 3; ++a) {
+        base[a] = static_cast<int>(std::floor(u[a])) - 1;
+        for (int t = 0; t < 4; ++t) {
+            const double x = u[a] - (base[a] + t);
+            bv[a][t] = CubicB(x);
+            bd[a][t] = CubicBPrime(x);
+            bdd[a][t] = CubicBSecond(x);
+        }
+    }
+    grad.setZero();
+    hess.setZero();
+    for (int dk = 0; dk < 4; ++dk) {
+        const int k = base[2] + dk;
+        if (k < 0 || k > n_) {
+            continue;
+        }
+        for (int dj = 0; dj < 4; ++dj) {
+            const int j = base[1] + dj;
+            if (j < 0 || j > n_) {
+                continue;
+            }
+            for (int di = 0; di < 4; ++di) {
+                const int i = base[0] + di;
+                if (i < 0 || i > n_) {
+                    continue;
+                }
+                const double a = alpha_[Index(i, j, k)];
+                const double bx = bv[0][di], by = bv[1][dj], bz = bv[2][dk];
+                const double dx = bd[0][di], dy = bd[1][dj], dz = bd[2][dk];
+                grad += a * Vec3(dx * by * bz, bx * dy * bz, bx * by * dz);
+                hess(0, 0) += a * bdd[0][di] * by * bz;
+                hess(1, 1) += a * bx * bdd[1][dj] * bz;
+                hess(2, 2) += a * bx * by * bdd[2][dk];
+                hess(0, 1) += a * dx * dy * bz;
+                hess(0, 2) += a * dx * by * dz;
+                hess(1, 2) += a * bx * dy * dz;
+            }
+        }
+    }
+    grad /= w_;
+    hess(1, 0) = hess(0, 1);
+    hess(2, 0) = hess(0, 2);
+    hess(2, 1) = hess(1, 2);
+    hess /= w_ * w_;
 }
 
 double ImplicitBspline::Sdf(const Vec3& p) const {

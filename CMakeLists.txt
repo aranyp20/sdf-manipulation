@@ -45,6 +45,9 @@ set(IMGUI_DIR ${imgui_SOURCE_DIR})
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
+    src/Core/HessianBasedDeformer/HBDebugData.h
+    src/Core/HessianBasedDeformer/HessianBasedDeformer.h
+    src/Core/HessianBasedDeformer/HessianBasedDeformer.cpp
     src/Math/MyEigen.h
     src/Representation/Implicit.h
     src/Representation/ImplicitBspline.h

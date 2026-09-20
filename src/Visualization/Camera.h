@@ -21,6 +21,9 @@ public:
     // Ray through pixel center (x, y) of a w x h image; y = 0 is the bottom row.
     Ray PixelRay(double x, double y, int w, int h) const;
 
+    // Project a world point to NDC ([-1, 1]^2, y up); false if it is behind the camera.
+    bool ProjectToNdc(const Vec3& p, int w, int h, Vec2& ndcOut) const;
+
 private:
     Vec3 Forward() const;
     Vec3 Right() const;

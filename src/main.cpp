@@ -1,3 +1,4 @@
+#include "Core/HessianBasedDeformer/HessianBasedDeformer.h"
 #include "Representation/ImplicitBspline.h"
 #include "Representation/Sphere.h"
 #include "Visualization/Camera.h"
@@ -58,6 +59,40 @@ void OnScroll(GLFWwindow* window, double /*dx*/, double dy) {
     state.dirty = true;
 }
 
+constexpr ImVec4 kMinimumColor = {0.2f, 0.9f, 0.2f, 1.0f}; // green
+constexpr ImVec4 kOneSaddleColor = {0.2f, 0.4f, 1.0f, 1.0f}; // blue
+constexpr ImVec4 kTwoSaddleColor = {1.0f, 0.9f, 0.1f, 1.0f}; // yellow
+constexpr ImVec4 kMaximumColor = {1.0f, 0.2f, 0.2f, 1.0f}; // red
+
+void DrawCriticalPoints(const HBDebugData& data, const Camera& camera, int w, int h) {
+    glPointSize(8.0f);
+    glBegin(GL_POINTS);
+    const auto drawAll = [&](const std::vector<Vec3>& points, const ImVec4& color) {
+        glColor3f(color.x, color.y, color.z);
+        for (const Vec3& p : points) {
+            Vec2 ndc;
+            if (camera.ProjectToNdc(p, w, h, ndc)) {
+                glVertex2d(ndc.x(), ndc.y());
+            }
+        }
+    };
+    drawAll(data.minimum, kMinimumColor);
+    drawAll(data.oneSaddle, kOneSaddleColor);
+    drawAll(data.twoSaddle, kTwoSaddleColor);
+    drawAll(data.maximum, kMaximumColor);
+    glEnd();
+}
+
+void CriticalPointRow(const char* label, const std::vector<Vec3>& points, const ImVec4& color) {
+    const float size = ImGui::GetFontSize();
+    ImGui::ColorButton(label,
+                       color,
+                       ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoDragDrop,
+                       ImVec2(size, size));
+    ImGui::SameLine();
+    ImGui::Text("%s: %d", label, static_cast<int>(points.size()));
+}
+
 } // namespace
 
 int main() {
@@ -98,6 +133,9 @@ int main() {
     const ModelEntry models[] = {{"Sphere", &sphere}, {"Paca", &paca}, {"Torus", &torus}};
     int selectedModel = 1;
 
+    HBDebugData hbDebugData;
+    bool showSaddlePoints = false;
+
     Renderer renderer;
     int lastW = 0, lastH = 0;
 
@@ -121,6 +159,11 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
         renderer.Draw(fbw, fbh);
 
+        const auto* selectedBspline = dynamic_cast<const ImplicitBspline*>(models[selectedModel].model);
+        if (showSaddlePoints && selectedBspline) {
+            DrawCriticalPoints(hbDebugData, state.camera, w, h);
+        }
+
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -132,6 +175,17 @@ int main() {
                 state.dirty = true;
             }
         }
+        ImGui::End();
+
+        ImGui::Begin("Hessian Deformer");
+        if (ImGui::Button("Execute") && selectedBspline) {
+            hbDebugData = HessianBasedDeformer(*selectedBspline).SearchSaddlePoints();
+        }
+        ImGui::Checkbox("Show critical points", &showSaddlePoints);
+        CriticalPointRow("Minimum", hbDebugData.minimum, kMinimumColor);
+        CriticalPointRow("1-saddle", hbDebugData.oneSaddle, kOneSaddleColor);
+        CriticalPointRow("2-saddle", hbDebugData.twoSaddle, kTwoSaddleColor);
+        CriticalPointRow("Maximum", hbDebugData.maximum, kMaximumColor);
         ImGui::End();
 
         ImGui::Render();

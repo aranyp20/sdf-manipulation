@@ -48,6 +48,19 @@ Vec3 Camera::Position() const {
     return target_ - Forward() * distance_;
 }
 
+bool Camera::ProjectToNdc(const Vec3& p, int w, int h, Vec2& ndcOut) const {
+    const Vec3 rel = p - Position();
+    const double z = rel.dot(Forward());
+    if (z <= 1e-9) {
+        return false;
+    }
+    const double aspect = static_cast<double>(w) / h;
+    const double tanHalfFov = std::tan(fovY_ / 2.0);
+    ndcOut.x() = rel.dot(Right()) / (z * aspect * tanHalfFov);
+    ndcOut.y() = rel.dot(Up()) / (z * tanHalfFov);
+    return true;
+}
+
 Ray Camera::PixelRay(double x, double y, int w, int h) const {
     const double aspect = static_cast<double>(w) / h;
     const double tanHalfFov = std::tan(fovY_ / 2.0);

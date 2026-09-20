@@ -16,6 +16,22 @@ public:
 
     double Sdf(const Vec3& p) const override;
 
+    // Analytic gradient and (symmetric) Hessian of F at p.
+    void EvalDerivatives(const Vec3& p, Vec3& grad, Mat3& hess) const;
+
+    const Vec3& DomainMin() const {
+        return domainMin_;
+    }
+    double DomainSize() const {
+        return size_;
+    }
+    double CellWidth() const {
+        return w_;
+    }
+    int CellsPerAxis() const {
+        return n_;
+    }
+
     // Solve A alpha = c so that F interpolates the given SDF at the grid vertices (paper eq. 6-7).
     void Fit(const std::function<double(const Vec3&)>& sdf);
 
