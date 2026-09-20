@@ -26,6 +26,7 @@ public:
     void
     DrawPoints(const std::vector<Vec3>& points, const Vec3& color, float pointSize, const Camera& camera, int w, int h) const;
     void DrawWireBox(const Box3& box, const Vec3& color, const Camera& camera, int w, int h) const;
+    void DrawLine(const Vec3& a, const Vec3& b, const Vec3& color, const Camera& camera, int w, int h) const;
 
 private:
     NormalMap normalMap_;

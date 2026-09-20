@@ -199,9 +199,10 @@ int main() {
     int selectedModel = 1;
 
     HBDebugData hbDebugData;
-    bool showSaddlePoints = false;
+    bool showSaddlePoints = true;
     bool showSearchGrid = false;
     bool showBoundingBox = false;
+    bool showWorldAxes = false;
     CriticalPointRef selectedPoint;
 
     Renderer renderer;
@@ -240,6 +241,11 @@ int main() {
             selectedPoint = hoveredPoint; // clicking empty space deselects
         }
 
+        if (showWorldAxes) {
+            renderer.DrawLine(Vec3::Zero(), Vec3::UnitX(), Vec3(1.0, 0.0, 0.0), state.camera, w, h);
+            renderer.DrawLine(Vec3::Zero(), Vec3::UnitY(), Vec3(0.0, 1.0, 0.0), state.camera, w, h);
+            renderer.DrawLine(Vec3::Zero(), Vec3::UnitZ(), Vec3(0.0, 0.0, 1.0), state.camera, w, h);
+        }
         if (showBoundingBox) {
             renderer.DrawWireBox(
                 models[selectedModel].model->GetBoundingBox(), ColorToVec3(kSearchGridColor), state.camera, w, h);
@@ -267,6 +273,7 @@ int main() {
 
         ImGui::Begin("Common debug visu");
         ImGui::Checkbox("Show bounding box", &showBoundingBox);
+        ImGui::Checkbox("Show world axes", &showWorldAxes);
         ImGui::End();
 
         ImGui::Begin("Hessian Deformer");

@@ -103,6 +103,19 @@ void Renderer::DrawPoints(const std::vector<Vec3>& points,
     glEnd();
 }
 
+void Renderer::DrawLine(const Vec3& a, const Vec3& b, const Vec3& color, const Camera& camera, int w, int h) const {
+    Vec2 na, nb;
+    if (!camera.ProjectToNdc(a, w, h, na) || !camera.ProjectToNdc(b, w, h, nb)) {
+        return;
+    }
+    glLineWidth(1.5f);
+    glColor3d(color.x(), color.y(), color.z());
+    glBegin(GL_LINES);
+    glVertex2d(na.x(), na.y());
+    glVertex2d(nb.x(), nb.y());
+    glEnd();
+}
+
 // Straight 3D segments project to straight 2D segments under perspective, so
 // drawing the corner-to-corner lines is exact.
 void Renderer::DrawWireBox(const Box3& box, const Vec3& color, const Camera& camera, int w, int h) const {
