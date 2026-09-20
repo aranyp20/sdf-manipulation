@@ -38,6 +38,8 @@ HBDebugData HessianBasedDeformer::SearchSaddlePoints() const {
     const Vec3 origin = spline_.DomainMin();
     const Vec3 lo = origin + Vec3::Constant(c0 * w);
     const Vec3 hi = origin + Vec3::Constant(c1 * w);
+    data.searchMin = lo;
+    data.searchMax = hi;
 
     Vec3 grad;
     Mat3 hess;

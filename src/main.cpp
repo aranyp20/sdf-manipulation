@@ -63,24 +63,50 @@ constexpr ImVec4 kMinimumColor = {0.2f, 0.9f, 0.2f, 1.0f}; // green
 constexpr ImVec4 kOneSaddleColor = {0.2f, 0.4f, 1.0f, 1.0f}; // blue
 constexpr ImVec4 kTwoSaddleColor = {1.0f, 0.9f, 0.1f, 1.0f}; // yellow
 constexpr ImVec4 kMaximumColor = {1.0f, 0.2f, 0.2f, 1.0f}; // red
+constexpr ImVec4 kSearchGridColor = {1.0f, 0.2f, 1.0f, 1.0f}; // magenta
+
+void DrawPoints(const std::vector<Vec3>& points, const ImVec4& color, float pointSize, const Camera& camera, int w, int h) {
+    glPointSize(pointSize);
+    glColor3f(color.x, color.y, color.z);
+    glBegin(GL_POINTS);
+    for (const Vec3& p : points) {
+        Vec2 ndc;
+        if (camera.ProjectToNdc(p, w, h, ndc)) {
+            glVertex2d(ndc.x(), ndc.y());
+        }
+    }
+    glEnd();
+}
+
+// Wireframe of the box the saddle search ran in. Straight 3D segments project to
+// straight 2D segments under perspective, so drawing the corner-to-corner lines is exact.
+void DrawSearchDomain(const Vec3& lo, const Vec3& hi, const Camera& camera, int w, int h) {
+    // Corner c has hi.x if bit 0 is set, hi.y if bit 1, hi.z if bit 2; edges join
+    // corners differing in exactly one bit.
+    constexpr int kEdges[12][2] = {
+        {0, 1}, {2, 3}, {4, 5}, {6, 7}, {0, 2}, {1, 3}, {4, 6}, {5, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}};
+    Vec3 corners[8];
+    for (int c = 0; c < 8; ++c) {
+        corners[c] = Vec3(c & 1 ? hi.x() : lo.x(), c & 2 ? hi.y() : lo.y(), c & 4 ? hi.z() : lo.z());
+    }
+    glLineWidth(1.5f);
+    glColor3f(kSearchGridColor.x, kSearchGridColor.y, kSearchGridColor.z);
+    glBegin(GL_LINES);
+    for (const auto& edge : kEdges) {
+        Vec2 a, b;
+        if (camera.ProjectToNdc(corners[edge[0]], w, h, a) && camera.ProjectToNdc(corners[edge[1]], w, h, b)) {
+            glVertex2d(a.x(), a.y());
+            glVertex2d(b.x(), b.y());
+        }
+    }
+    glEnd();
+}
 
 void DrawCriticalPoints(const HBDebugData& data, const Camera& camera, int w, int h) {
-    glPointSize(8.0f);
-    glBegin(GL_POINTS);
-    const auto drawAll = [&](const std::vector<Vec3>& points, const ImVec4& color) {
-        glColor3f(color.x, color.y, color.z);
-        for (const Vec3& p : points) {
-            Vec2 ndc;
-            if (camera.ProjectToNdc(p, w, h, ndc)) {
-                glVertex2d(ndc.x(), ndc.y());
-            }
-        }
-    };
-    drawAll(data.minimum, kMinimumColor);
-    drawAll(data.oneSaddle, kOneSaddleColor);
-    drawAll(data.twoSaddle, kTwoSaddleColor);
-    drawAll(data.maximum, kMaximumColor);
-    glEnd();
+    DrawPoints(data.minimum, kMinimumColor, 8.0f, camera, w, h);
+    DrawPoints(data.oneSaddle, kOneSaddleColor, 8.0f, camera, w, h);
+    DrawPoints(data.twoSaddle, kTwoSaddleColor, 8.0f, camera, w, h);
+    DrawPoints(data.maximum, kMaximumColor, 8.0f, camera, w, h);
 }
 
 void CriticalPointRow(const char* label, const std::vector<Vec3>& points, const ImVec4& color) {
@@ -135,6 +161,7 @@ int main() {
 
     HBDebugData hbDebugData;
     bool showSaddlePoints = false;
+    bool showSearchGrid = false;
 
     Renderer renderer;
     int lastW = 0, lastH = 0;
@@ -160,6 +187,9 @@ int main() {
         renderer.Draw(fbw, fbh);
 
         const auto* selectedBspline = dynamic_cast<const ImplicitBspline*>(models[selectedModel].model);
+        if (showSearchGrid && selectedBspline) {
+            DrawSearchDomain(hbDebugData.searchMin, hbDebugData.searchMax, state.camera, w, h);
+        }
         if (showSaddlePoints && selectedBspline) {
             DrawCriticalPoints(hbDebugData, state.camera, w, h);
         }
@@ -182,6 +212,7 @@ int main() {
             hbDebugData = HessianBasedDeformer(*selectedBspline).SearchSaddlePoints();
         }
         ImGui::Checkbox("Show critical points", &showSaddlePoints);
+        ImGui::Checkbox("Show critical grid", &showSearchGrid);
         CriticalPointRow("Minimum", hbDebugData.minimum, kMinimumColor);
         CriticalPointRow("1-saddle", hbDebugData.oneSaddle, kOneSaddleColor);
         CriticalPointRow("2-saddle", hbDebugData.twoSaddle, kTwoSaddleColor);
