@@ -24,6 +24,11 @@ public:
     // Analytic gradient and (symmetric) Hessian of F at p.
     void EvalDerivatives(const Vec3& p, Vec3& grad, Mat3& hess) const;
 
+    // Univariate cubic B-spline basis b(t) (paper eq. 4) and its derivatives;
+    // symmetric, supported on [-2, 2]. Also used by the deformer (paper eq. 10).
+    static double Basis(double t);
+    static double BasisPrime(double t);
+
     const Vec3& DomainMin() const {
         return domainMin_;
     }

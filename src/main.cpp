@@ -11,6 +11,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cmath>
+#include <optional>
 
 namespace {
 
@@ -213,6 +214,7 @@ int main() {
     bool showBoundingBox = false;
     bool showWorldAxes = false;
     CriticalPointRef selectedPoint;
+    std::vector<SaddleDeformer> deformers; // rooted in the currently selected model
 
     Renderer renderer;
     int lastW = 0, lastH = 0;
@@ -225,8 +227,16 @@ int main() {
         glfwGetFramebufferSize(window, &fbw, &fbh);
         glViewport(0, 0, fbw, fbh);
 
+        const auto* selectedBspline = dynamic_cast<const ImplicitBspline*>(models[selectedModel].model);
+
         if (state.dirty || w != lastW || h != lastH) {
-            renderer.ComputeNormalMap(*models[selectedModel].model, state.camera, w, h);
+            std::optional<DeformedImplicit> deformed;
+            const Implicit* renderModel = models[selectedModel].model;
+            if (selectedBspline && !deformers.empty()) {
+                deformed.emplace(*selectedBspline, deformers);
+                renderModel = &*deformed;
+            }
+            renderer.ComputeNormalMap(*renderModel, state.camera, w, h);
             renderer.ShadeDiffuse();
             state.dirty = false;
             lastW = w;
@@ -236,8 +246,6 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         renderer.Draw(fbw, fbh);
-
-        const auto* selectedBspline = dynamic_cast<const ImplicitBspline*>(models[selectedModel].model);
 
         CriticalPointRef hoveredPoint;
         if (showSaddlePoints && selectedBspline && !ImGui::GetIO().WantCaptureMouse) {
@@ -275,6 +283,7 @@ int main() {
             if (ImGui::Selectable(models[i].name, selectedModel == i) && selectedModel != i) {
                 selectedModel = i;
                 selectedPoint = {};
+                deformers.clear();
                 state.dirty = true;
             }
         }
@@ -299,6 +308,37 @@ int main() {
         if (selectedPoint.Valid()) {
             const Vec3& p = CriticalPointList(hbDebugData, selectedPoint.type)[selectedPoint.index];
             ImGui::Text("(%.4f, %.4f, %.4f)", p.x(), p.y(), p.z());
+            // Editing is restricted to saddle points; deforming toward a
+            // minimum/maximum would create an outlier surface (paper fig. 4).
+            if (selectedPoint.type == 1 || selectedPoint.type == 2) {
+                if (ImGui::Button("Add deformer") && selectedBspline) {
+                    deformers.push_back(HessianBasedDeformer(*selectedBspline).MakeDeformer(p));
+                    state.dirty = true;
+                }
+            } else {
+                ImGui::TextDisabled("Only saddle points can be edited");
+            }
+        }
+        ImGui::SeparatorText("Deformers");
+        for (int i = 0; i < static_cast<int>(deformers.size()); ++i) {
+            SaddleDeformer& deformer = deformers[i];
+            ImGui::PushID(i);
+            ImGui::Text("s = (%.3f, %.3f, %.3f)  F(s) = %.4f", deformer.s.x(), deformer.s.y(), deformer.s.z(), deformer.fs);
+            bool changed = false;
+            changed |= ImGui::SliderFloat("mu", &deformer.mu, 0.5f, 5.0f);
+            changed |= ImGui::SliderFloat("phi", &deformer.phi, 1.0f, 16.0f);
+            changed |= ImGui::SliderFloat("rho", &deformer.rho, -50.0f, 50.0f);
+            if (changed) {
+                deformer.UpdateWeights();
+                state.dirty = true;
+            }
+            if (ImGui::Button("Remove")) {
+                deformers.erase(deformers.begin() + i);
+                --i;
+                state.dirty = true;
+            }
+            ImGui::Separator();
+            ImGui::PopID();
         }
         ImGui::End();
 

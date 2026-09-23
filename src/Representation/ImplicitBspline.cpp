@@ -6,10 +6,7 @@
 #include <cmath>
 #include <limits>
 
-namespace {
-
-// Univariate cubic B-spline basis b(t) (paper eq. 4); symmetric, supported on [-2, 2].
-double CubicB(double t) {
+double ImplicitBspline::Basis(double t) {
     t = std::abs(t);
     if (t < 1.0) {
         return 0.5 * t * t * t - t * t + 2.0 / 3.0;
@@ -20,8 +17,8 @@ double CubicB(double t) {
     return 0.0;
 }
 
-// First derivative b'(t); odd function.
-double CubicBPrime(double t) {
+// Odd function.
+double ImplicitBspline::BasisPrime(double t) {
     const double s = t < 0.0 ? -1.0 : 1.0;
     t = std::abs(t);
     if (t < 1.0) {
@@ -32,6 +29,8 @@ double CubicBPrime(double t) {
     }
     return 0.0;
 }
+
+namespace {
 
 // Second derivative b''(t); even function.
 double CubicBSecond(double t) {
@@ -70,7 +69,7 @@ double ImplicitBspline::Eval(const Vec3& p) const {
     for (int a = 0; a < 3; ++a) {
         base[a] = static_cast<int>(std::floor(u[a])) - 1;
         for (int t = 0; t < 4; ++t) {
-            weight[a][t] = CubicB(u[a] - (base[a] + t));
+            weight[a][t] = Basis(u[a] - (base[a] + t));
         }
     }
     double sum = 0.0;
@@ -105,8 +104,8 @@ void ImplicitBspline::EvalDerivatives(const Vec3& p, Vec3& grad, Mat3& hess) con
         base[a] = static_cast<int>(std::floor(u[a])) - 1;
         for (int t = 0; t < 4; ++t) {
             const double x = u[a] - (base[a] + t);
-            bv[a][t] = CubicB(x);
-            bd[a][t] = CubicBPrime(x);
+            bv[a][t] = Basis(x);
+            bd[a][t] = BasisPrime(x);
             bdd[a][t] = CubicBSecond(x);
         }
     }
