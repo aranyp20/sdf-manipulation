@@ -5,13 +5,12 @@
 #include <thread>
 
 namespace {
-constexpr int kMaxSteps = 128;
 constexpr double kMaxDistance = 100.0;
 constexpr double kHitEpsilon = 1e-4;
 
-bool SphereTrace(const Implicit& sdf, const Ray& ray, double& tOut) {
+bool SphereTrace(const Implicit& sdf, const Ray& ray, int maxSteps, double& tOut) {
     double t = 0.0;
-    for (int i = 0; i < kMaxSteps && t < kMaxDistance; ++i) {
+    for (int i = 0; i < maxSteps && t < kMaxDistance; ++i) {
         const double d = sdf.Sdf(ray.origin + t * ray.dir);
         if (d < kHitEpsilon) {
             tOut = t;
@@ -24,7 +23,7 @@ bool SphereTrace(const Implicit& sdf, const Ray& ray, double& tOut) {
 
 } // namespace
 
-void Renderer::ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w, int h) {
+void Renderer::ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w, int h, int maxSteps) {
     normalMap_.w = w;
     normalMap_.h = h;
     normalMap_.normals.assign(static_cast<size_t>(w) * h, Vec3::Zero());
@@ -39,7 +38,7 @@ void Renderer::ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w
                 for (int x = 0; x < w; ++x) {
                     const Ray ray = camera.PixelRay(x, y, w, h);
                     double t;
-                    if (SphereTrace(sdf, ray, t)) {
+                    if (SphereTrace(sdf, ray, maxSteps, t)) {
                         const size_t i = static_cast<size_t>(y) * w + x;
                         normalMap_.normals[i] = sdf.Grad(ray.origin + t * ray.dir).normalized();
                         normalMap_.hit[i] = 1;

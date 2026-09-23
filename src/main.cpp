@@ -215,6 +215,7 @@ int main() {
     bool showWorldAxes = false;
     CriticalPointRef selectedPoint;
     std::vector<SaddleDeformer> deformers; // rooted in the currently selected model
+    int maxTraceSteps = 128;
 
     Renderer renderer;
     int lastW = 0, lastH = 0;
@@ -236,7 +237,7 @@ int main() {
                 deformed.emplace(*selectedBspline, deformers);
                 renderModel = &*deformed;
             }
-            renderer.ComputeNormalMap(*renderModel, state.camera, w, h);
+            renderer.ComputeNormalMap(*renderModel, state.camera, w, h, maxTraceSteps);
             renderer.ShadeDiffuse();
             state.dirty = false;
             lastW = w;
@@ -292,6 +293,9 @@ int main() {
         ImGui::Begin("Common debug visu");
         ImGui::Checkbox("Show bounding box", &showBoundingBox);
         ImGui::Checkbox("Show world axes", &showWorldAxes);
+        if (ImGui::SliderInt("Max trace steps", &maxTraceSteps, 8, 1024, "%d", ImGuiSliderFlags_Logarithmic)) {
+            state.dirty = true;
+        }
         ImGui::End();
 
         ImGui::Begin("Hessian Deformer");

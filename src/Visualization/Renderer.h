@@ -14,7 +14,7 @@ struct NormalMap {
 class Renderer {
 public:
     // Part 1: sphere trace the implicit and build a normal map.
-    void ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w, int h);
+    void ComputeNormalMap(const Implicit& sdf, const Camera& camera, int w, int h, int maxSteps = 128);
 
     // Part 2: shade the normal map with simple diffuse lighting into an RGB buffer.
     void ShadeDiffuse();
